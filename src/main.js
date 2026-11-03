@@ -40,7 +40,7 @@ async function grow() {
   resize();
   const touch = window.matchMedia('(pointer: coarse)').matches;
   document.body.classList.add('explore');
-  const explore = createExplore(meadow, { reducedMotion, touch });
+  const explore = createExplore(meadow, { reducedMotion, touch, onVisit: (id) => meadow.bloom.visit(id) });
   setUpPageToggle();
 
   // Lower the resolution if frames are slow (measured over 2 s windows, after a warm-up).

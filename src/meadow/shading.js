@@ -40,6 +40,22 @@ export const LIGHT_GLSL = /* glsl */ `
   }
 `;
 
+// Colour returning to the land: the valley starts dusky and muted; a "life" field painted
+// around each board you read (and everything, once all are read) brings back full colour.
+export const LIFE_GLSL = /* glsl */ `
+  uniform sampler2D uLife;
+  uniform float uLifeExtent, uLifeAll;
+  float lifeAt(vec2 xz){
+    return max(texture(uLife, xz / uLifeExtent + 0.5).r, uLifeAll);
+  }
+  vec3 alive(vec3 c, vec2 xz){
+    float l = smoothstep(0.0, 1.0, lifeAt(xz));
+    float lum = dot(c, vec3(0.3, 0.59, 0.11));
+    vec3 dusk = mix(vec3(lum), c, 0.32) * vec3(0.84, 0.82, 0.92);
+    return mix(dusk, c, l);
+  }
+`;
+
 export function sharedUniforms() {
   return {
     uTime: { value: 0 },
@@ -49,6 +65,10 @@ export function sharedUniforms() {
     uWake: { value: 0.5 },
     uHeightMap: { value: null },
     uHeightExtent: { value: 1 },
+    uLife: { value: null },
+    uLifeExtent: { value: 1 },
+    uLifeAll: { value: 0 },
+    uBloom: { value: [0, 0, 0, 0, 0, 0] }, // how open each board's buds are, in BOARDS order
     uSunDir: { value: new THREE.Vector3(0, 1, 0) },
     uSunColor: { value: new THREE.Color('#ffd7a0') },
     uSkyColor: { value: new THREE.Color('#9fb8d8') },

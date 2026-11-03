@@ -7,6 +7,7 @@ import { createPollen } from './life.js';
 import { createPetals } from './petals.js';
 import { createPost } from './post.js';
 import { createBoards } from './boards.js';
+import { createBloom } from './bloom.js';
 import { BOARDS, PATH } from './places.js';
 
 // The whole scene: an open valley of rolling hills under a warm, painted sky.
@@ -44,12 +45,13 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
   scene.add(terrain, createTrees(), boards.group);
   // the field around you: fewer blades and a smaller tile on lighter devices
   scene.add(createGrass(uniforms, Math.round(130000 * quality), Math.round(40 + 26 * quality)));
-  scene.add(createFlowers(uniforms, Math.round(9000 * quality)));
+  scene.add(createFlowers(uniforms, Math.round(9000 * quality), BOARDS, Math.round(Math.max(60, 170 * quality))));
   const pollen = createPollen(Math.round(700 * quality));
   // the petal stream starts small; blooms add to it (F6)
   const petals = createPetals(quality < 0.6 ? 220 : 400, { reducedMotion });
   petals.add('#ffb3cc', 40);
   scene.add(pollen.points, petals.mesh);
+  const bloom = createBloom({ uniforms, petals, boards: BOARDS, scene, heightAt, reducedMotion });
 
   const post = createPost(renderer, scene, camera, { bloom: quality >= 0.3 });
 
@@ -83,12 +85,18 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
     sun.color.copy(uniforms.uSunColor.value);
   }
 
+  let lastT = 0;
   function render(t) {
+    const dt = Math.min(0.1, Math.max(0, t - lastT));
+    lastT = t;
+    // reading every board brings on golden hour
+    const golden = bloom.update(t, dt);
+    if (golden > 0) setSunElevation(SUN.elevation - golden * 6);
     uniforms.uTime.value = reducedMotion ? 0 : t;
     pollen.update(reducedMotion ? 0 : t, sunDir, pixelRatio);
     sky.uniforms.uTime.value = t;
     post.composer.render();
   }
 
-  return { renderer, scene, camera, uniforms, petals, boards, resize, setView, setSunElevation, render, heightAt };
+  return { renderer, scene, camera, uniforms, petals, boards, bloom, resize, setView, setSunElevation, render, heightAt };
 }
