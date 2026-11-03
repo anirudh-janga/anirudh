@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { seeded } from './noise.js';
-import { WIND_GLSL, LIGHT_GLSL } from './shading.js';
+import { WIND_GLSL, LIGHT_GLSL, LIFE_GLSL } from './shading.js';
 import { HEIGHT_GLSL } from './terrain.js';
 import { PATH_GLSL } from './places.js';
 
@@ -76,12 +76,13 @@ export function createGrass(uniforms, count, tile = 64) {
     fragmentShader: /* glsl */ `
       varying float vK; varying float vDry; varying vec3 vWorld; varying float vGust;
       ${LIGHT_GLSL}
+      ${LIFE_GLSL}
       void main(){
         vec3 root = vec3(0.06, 0.16, 0.035);
         vec3 tip = mix(vec3(0.36, 0.56, 0.13), vec3(0.64, 0.62, 0.24), smoothstep(0.6, 1.0, vDry));
         vec3 albedo = mix(root, tip, smoothstep(0.0, 0.85, vK));
         albedo += vec3(0.16, 0.15, 0.05) * vGust * vK * vK; // the sheen of a passing gust
-        gl_FragColor = vec4(shade(albedo, vec3(0.0, 1.0, 0.0), vWorld, vK), 1.0);
+        gl_FragColor = vec4(shade(alive(albedo, vWorld.xz), vec3(0.0, 1.0, 0.0), vWorld, vK), 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
