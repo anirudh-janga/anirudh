@@ -22,7 +22,7 @@ body {
   -webkit-font-smoothing: antialiased;
   /* shown before the meadow loads, and instead of it without WebGL */
   background:
-    linear-gradient(180deg, #a9c3dc 0%, #e8e2cf 38%, #c9c39a 46%, #6f8a3c 58%, #3d5a24 100%) fixed;
+    linear-gradient(180deg, #8fb0d8 0%, #eeaa9c 30%, #ffd09a 44%, #c9cf7a 50%, #8fb24a 62%, #5e8a2e 100%) fixed;
   min-height: 100vh;
 }
 
