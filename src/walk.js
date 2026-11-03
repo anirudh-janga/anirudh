@@ -5,11 +5,11 @@ import { STANDS } from './meadow/path.js';
 // them, and a few small "moments" happen as sections come into view.
 // pos = [x, z, eye height] from STANDS; look = a point to face; sun elevation; breeze strength
 const VIEWS = {
-  top: { pos: STANDS.top, look: [0, 5, -60], sun: 13, breeze: 0.45 },
-  work: { pos: STANDS.work, look: [7, 3, -42], sun: 12.5, breeze: 0.95 },
-  making: { pos: STANDS.making, look: [-5, 1.2, -26], sun: 12, breeze: 0.5 },
-  photos: { pos: STANDS.photos, look: [10, 4.5, -48], sun: 10.5, breeze: 0.45 },
-  contact: { pos: STANDS.contact, look: [6, 6, -60], sun: 8, breeze: 0.35 },
+  top: { pos: STANDS.top, look: [0, 5, -60], sun: 11, breeze: 0.45 },
+  work: { pos: STANDS.work, look: [7, 3, -42], sun: 10.5, breeze: 0.95 },
+  making: { pos: STANDS.making, look: [-5, 1.2, -26], sun: 10, breeze: 0.5 },
+  photos: { pos: STANDS.photos, look: [10, 4.5, -48], sun: 9, breeze: 0.45 },
+  contact: { pos: STANDS.contact, look: [6, 6, -60], sun: 6, breeze: 0.35 },
 };
 const ORDER = ['top', 'work', 'making', 'photos', 'contact'];
 
@@ -30,8 +30,8 @@ export function createWalk(meadow, { reducedMotion }) {
   document.fonts?.ready.then(measure);
 
   const ease = (x) => x * x * (3 - 2 * x);
-  const target = { pos: new THREE.Vector3(), look: new THREE.Vector3(), sun: 13, breeze: 0.45 };
-  const current = { pos: new THREE.Vector3(...VIEWS.top.pos), look: new THREE.Vector3(...VIEWS.top.look), sun: 13, breeze: 0.45 };
+  const target = { pos: new THREE.Vector3(), look: new THREE.Vector3(), sun: 11, breeze: 0.45 };
+  const current = { pos: new THREE.Vector3(...VIEWS.top.pos), look: new THREE.Vector3(...VIEWS.top.look), sun: 11, breeze: 0.45 };
 
   function targetFor(p) {
     let i = 0;
