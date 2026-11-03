@@ -67,8 +67,18 @@ async function grow() {
   meadow.renderer.setAnimationLoop((now) => {
     if (document.hidden) return (last = now);
     const t = (now - start) / 1000;
-    explore.update(Math.min((now - last) / 1000, 0.1), t);
+    const dt = Math.min((now - last) / 1000, 0.1);
+    const here = explore.update(dt, t);
     last = now;
+    meadow.petals.update(t, dt, {
+      camPos: meadow.camera.position,
+      forward: here.forward,
+      speed: here.speed,
+      next: here.next,
+      reading: here.reading,
+      pointer: meadow.uniforms.uPointerOn.value > 0.5 ? meadow.uniforms.uPointer.value : null,
+      ground: meadow.heightAt,
+    });
     meadow.render(t);
     frames++;
     if (frames === 2) canvas.classList.add('ready'); // fade in once there's a real frame
