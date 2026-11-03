@@ -3,7 +3,7 @@
 A one-page site: a sunlit Pacific Northwest meadow at the edge of the woods,
 grown in three.js, with who I am written over it.
 
-**Live: [asrijanga.github.io/anirudh](https://asrijanga.github.io/anirudh/)**
+**Live: [anirudh-janga.github.io/anirudh](https://anirudh-janga.github.io/anirudh/)**
 
 ![The meadow](docs/review/desktop-hero.jpg)
 

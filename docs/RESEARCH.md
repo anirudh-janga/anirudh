@@ -11,7 +11,7 @@ LinkedIn and Unsplash; no email is published.
 
 | Claim | Source | Confidence |
 |---|---|---|
-| Full name **Anirudh Janga** | GitHub handle `asrijanga` (a-sri-**janga**), account email `janirudh…` (j-anirudh), [Slack Engineering](https://slack.engineering/empowering-engineers-with-ai/), [LinkedIn](https://www.linkedin.com/in/anirudhjanga/) | Confirmed |
+| Full name **Anirudh Janga** | GitHub handle `asrijanga` (a-sri-**janga**; renamed to `anirudh-janga` on 2026-11-03), account email `janirudh…` (j-anirudh), [Slack Engineering](https://slack.engineering/empowering-engineers-with-ai/), [LinkedIn](https://www.linkedin.com/in/anirudhjanga/) | Confirmed |
 | **Senior Software Engineer at Slack** | Author byline on the Slack Engineering post (Nov 2024); LinkedIn lists Slack | Confirmed |
 | Based in **Seattle** | LinkedIn; GitHub profile | Confirmed |
 | **12+ years** in software engineering | LinkedIn summary | Confirmed |
