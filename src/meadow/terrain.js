@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { fbm2, smoothstep } from './noise.js';
-import { LIGHT_GLSL } from './shading.js';
+import { LIGHT_GLSL, WIND_GLSL } from './shading.js';
 
 // The explorable valley: broad, soft swells, a low rise where you arrive,
 // and hills climbing gently all around into warm haze.
@@ -65,8 +65,8 @@ export function createTerrain(uniforms) {
         gl_Position = projectionMatrix * viewMatrix * w;
       }`,
     fragmentShader: /* glsl */ `
-      uniform float uTime, uBreeze;
       varying vec3 vWorld; varying vec3 vNormal;
+      ${WIND_GLSL}
       ${LIGHT_GLSL}
       float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float vnoise(vec2 p){
@@ -82,9 +82,7 @@ export function createTerrain(uniforms) {
         // fine streaks so distant slopes still read as grass
         albedo *= 0.9 + 0.2 * vnoise(vec2(xz.x * 1.7, xz.y * 0.6));
         // the gust sheen travelling over the hills
-        vec2 wd = normalize(vec2(1.0, -0.35));
-        float gust = pow(0.5 + 0.5 * sin(dot(xz, wd) * 0.16 - uTime * 1.3), 3.0) * uBreeze;
-        albedo += vec3(0.1, 0.1, 0.03) * gust;
+        albedo += vec3(0.11, 0.1, 0.03) * gustAt(xz);
         gl_FragColor = vec4(shade(albedo, normalize(vNormal), vWorld, 0.4), 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

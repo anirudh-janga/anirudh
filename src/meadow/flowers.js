@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { heightAt } from './terrain.js';
 import { fbm2, seeded } from './noise.js';
-import { MEADOW } from './grass.js';
+// Wildflowers are scattered across the explorable valley.
+const MEADOW = { x0: -100, x1: 100, z0: -105, z1: 90 };
 import { WIND_GLSL, LIGHT_GLSL } from './shading.js';
 import { distanceToPath } from './path.js';
 

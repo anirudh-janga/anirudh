@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createTerrain, heightAt } from './terrain.js';
+import { createTerrain, createHeightTexture, heightAt, HEIGHTMAP } from './terrain.js';
 import { createSky, createTrees, sunDirection, SUN, HAZE } from './landscape.js';
 import { createGrass, sharedUniforms } from './grass.js';
 import { createFlowers } from './flowers.js';
@@ -32,9 +32,12 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
   uniforms.uFogDensity.value = 0.0018;
   uniforms.uSkyColor.value.set('#ffd2bc');
   uniforms.uSunColor.value.set('#ffe6c0');
+  uniforms.uHeightMap.value = createHeightTexture();
+  uniforms.uHeightExtent.value = HEIGHTMAP.extent;
 
   scene.add(createTerrain(uniforms), createTrees());
-  scene.add(createGrass(uniforms, Math.round(110000 * quality)));
+  // the field around you: fewer blades and a smaller tile on lighter devices
+  scene.add(createGrass(uniforms, Math.round(130000 * quality), Math.round(40 + 26 * quality)));
   scene.add(createFlowers(uniforms, Math.round(9000 * quality)));
   const butterflies = createButterflies(quality < 0.6 ? 4 : 7);
   const pollen = createPollen(Math.round(700 * quality));
