@@ -25,7 +25,13 @@ function startingQuality() {
 }
 
 async function grow() {
-  const [{ createMeadow }, { createExplore }] = await Promise.all([import('./meadow/meadow.js'), import('./explore.js')]);
+  const [{ createMeadow }, { createExplore }, { createSound }, { CLUSTERS }, { BOARDS }] = await Promise.all([
+    import('./meadow/meadow.js'),
+    import('./explore.js'),
+    import('./sound.js'),
+    import('./meadow/flowers.js'),
+    import('./meadow/places.js'),
+  ]);
   const canvas = document.createElement('canvas');
   canvas.id = 'meadow';
   canvas.setAttribute('aria-hidden', 'true');
@@ -40,7 +46,18 @@ async function grow() {
   resize();
   const touch = window.matchMedia('(pointer: coarse)').matches;
   document.body.classList.add('explore');
-  const explore = createExplore(meadow, { reducedMotion, touch, onVisit: (id) => meadow.bloom.visit(id) });
+  const sound = createSound();
+  let explore = null;
+  const onVisit = (id) => {
+    meadow.bloom.visit(id);
+    // chime towards the board: pan by its bearing from where you're facing
+    const b = BOARDS.find((x) => x.id === id);
+    const s = explore?.position;
+    const rel = s ? Math.atan2(-(b.x - s.x), -(b.z - s.z)) - s.yaw : 0;
+    sound.chime(CLUSTERS[id], -Math.sin(rel));
+  };
+  explore = createExplore(meadow, { reducedMotion, touch, onVisit });
+  setUpSoundToggle(sound);
   setUpPageToggle();
 
   // Lower the resolution if frames are slow (measured over 2 s windows, after a warm-up).
@@ -69,6 +86,7 @@ async function grow() {
     const t = (now - start) / 1000;
     const dt = Math.min((now - last) / 1000, 0.1);
     const here = explore.update(dt, t);
+    sound.update(t, here.speed);
     last = now;
     meadow.petals.update(t, dt, {
       camPos: meadow.camera.position,
@@ -84,6 +102,39 @@ async function grow() {
     if (frames === 2) canvas.classList.add('ready'); // fade in once there's a real frame
     watchFrameRate(now);
   });
+}
+
+// Sound is opt-in: a quiet toggle in the toolbar, remembered for this visit. Browsers only let
+// audio start from a user gesture, so a remembered "on" waits for the first click or key.
+function setUpSoundToggle(sound) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'sound-toggle';
+  const render = () => {
+    btn.setAttribute('aria-pressed', String(sound.on));
+    btn.textContent = sound.on ? '♪ Sound on' : '♪ Sound off';
+  };
+  btn.addEventListener('click', () => {
+    sound.setOn(!sound.on);
+    try {
+      sessionStorage.setItem('meadow-sound', sound.on ? '1' : '0');
+    } catch {}
+    render();
+  });
+  render();
+  document.querySelector('.hud .tools').appendChild(btn);
+  let remembered = false;
+  try {
+    remembered = sessionStorage.getItem('meadow-sound') === '1';
+  } catch {}
+  if (remembered) {
+    const wake = () => {
+      sound.setOn(true);
+      render();
+    };
+    addEventListener('pointerdown', wake, { once: true });
+    addEventListener('keydown', wake, { once: true });
+  }
 }
 
 // The skip link becomes a switch between exploring the meadow and reading everything as a page.
