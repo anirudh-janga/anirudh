@@ -49,7 +49,7 @@ export function createSky() {
           col = mix(col, uZenith, smoothstep(0.16, 0.75, h));
           col = mix(col, horizon * 0.92, smoothstep(0.0, -0.25, h));
           float s = max(dot(d, normalize(uSunDir)), 0.0);
-          col += uSunColor * (pow(s, 6.0) * 0.35 + pow(s, 48.0) * 0.55);
+          col += uSunColor * (pow(s, 8.0) * 0.18 + pow(s, 64.0) * 0.45);
           col += uSunColor * smoothstep(0.9991, 0.9996, s) * 1.6;
           // painterly cloud bands, lit from the sun side
           vec2 cp = d.xz / max(h + 0.15, 0.05);
