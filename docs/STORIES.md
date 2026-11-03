@@ -172,3 +172,194 @@ Acceptance criteria
 ## Order of work
 M1 → M2 → M3 → M4 → M5 → M6, each merged to `main` when done.
 Content questions are resolved (see RESEARCH.md).
+
+---
+
+# Part 2 — The Wind (Flower ambiance)
+
+*Feedback: "I am going for the atmosphere and ambiance of the flower game", and
+"I should be able to navigate from a starting point and learn about who I am
+through boards in the meadow."*
+
+Read as **Flower** (thatgamecompany, 2009): you are the wind, carrying a stream
+of petals over endless rolling hills of grass, and colour floods back into the
+land behind you. The page stops being a column you scroll. It becomes **a
+place you explore**: you arrive at a starting point and drift through the
+meadow, and Anirudh's story is written on **wooden boards** standing in the
+grass. Walk up to one and read it.
+
+### What changes from Part 1
+| Part 1 | Part 2 |
+|---|---|
+| Rainier and fir woods closing in | open, endless rolling hills, a few lone trees on far crests |
+| physically based sky, white glare | a painted warm gradient sky, a soft sun, gentle bloom we control |
+| knee-high grass, flower specks | a deep, lush sea of grass with large visible wind waves |
+| scrolling drives a fixed camera | **free navigation** from a starting point: glide where you like |
+| frosted panels over the scene | **boards in the meadow**; reaching one opens its story |
+| butterflies | **a petal stream** that guides you from board to board |
+| static flowers | **buds bloom** around each board you visit, and colour returns |
+| silent | optional ambient sound (opt-in) |
+
+### Ground rules
+- **Readability first.** Long text is never read off a 3D texture at an angle.
+  Boards carry big painted titles in the world; their full text opens in a
+  crisp, accessible card (AA contrast) when you arrive.
+- **One page, one scene.** No routes, no reloads.
+- **Nobody gets lost.** There's always a visible way to the next board and
+  back to the start.
+- **Works for everyone.** Keyboard and screen readers get the whole story.
+  Without WebGL, the boards render as an ordinary readable page (today's layout).
+- Content stays as confirmed in RESEARCH.md; it moves from panels onto boards.
+
+## Story F1 — Rolling Hills
+**As** a visitor, **I want** wide, soft, endless hills under a warm sky,
+**so that** the world feels open and dreamy rather than enclosed.
+
+Acceptance criteria
+- Terrain becomes broad, smooth swells stretching to the horizon, with no
+  forest ring and no Rainier. A gentle valley is the explorable area,
+  roughly 200 × 200 m, with soft rises that hide some boards until you
+  crest them.
+- Distant hills fade into warm haze, layered like a painting.
+- Three to five lone deciduous trees on crests act as landmarks, with round
+  soft canopies silhouetted against the light. Boards stand near some of them.
+- **Painted sky:** our own gradient shader (apricot horizon, rose mid-sky, soft
+  blue zenith), a large soft sun with a halo, and slow painterly cloud bands.
+  Values stay in a controlled range, so bloom is safe again.
+- **Grade:** warm and gently saturated, lifted shadows, soft bloom on the sun,
+  highlights and petals only, and a light vignette.
+
+## Story F2 — A Sea of Grass
+**As** a visitor, **I want** the grass to move like water, **so that** I can
+see the wind.
+
+Acceptance criteria
+- Dense, lush grass around wherever you are, which follows you as you move:
+  a chunked near field plus a cheap far field (a shader on the terrain) to the
+  horizon. No visible edge where the grass ends.
+- **Wind waves:** broad gust bands roll across the hills so the sheen visibly
+  travels, and the tips brighten as they bow towards the light.
+- Colour runs from deep green roots to sunlit yellow-green tips, with backlit
+  glow towards the sun.
+- The grass parts around you as you glide, leaving a soft wake.
+
+## Story F3 — The Starting Point & Getting Around
+**As** a visitor, **I want** to arrive somewhere and move freely through the
+meadow, **so that** I explore rather than scroll.
+
+Acceptance criteria
+- **The start:** you arrive on a low rise looking over the valley. The first
+  board ("Hello") stands just in front of you, and the others are visible as
+  small signs dotted across the meadow, some near the lone trees.
+- **Moving** (you are the wind: a smooth glide a little above the grass,
+  never a stiff first-person walk):
+  - *Mouse/trackpad:* click anywhere on the ground or on a board to glide
+    there; drag to look around.
+  - *Keyboard:* W/A/S/D or arrow keys to glide and turn; Tab / Shift+Tab to
+    travel board to board; Enter opens the board you're at; Esc closes it.
+  - *Touch:* tap the ground or a board to glide there; drag to look.
+- **Gentle physics:** easing in and out, following the terrain, and soft
+  bounds at the valley edge (the wind turns you back, no walls).
+- **Way-finding:**
+  - a small compass strip at the top showing each board's direction, with visited ones filled
+  - a "Back to start" control
+  - a faint trodden path through the grass connecting the boards in their suggested order
+- Reduced motion: travel becomes quick fades between boards instead of glides.
+
+## Story F4 — Boards in the Meadow
+**As** a visitor, **I want** to learn who Anirudh is from boards standing in
+the meadow, **so that** his story is part of the place.
+
+Acceptance criteria
+- **Five boards,** in suggested order:
+  1. **Hello**, at the start: name, role, Seattle, the one-line lede
+  2. **At Slack**: the AI tooling and the published figures, with the write-up link
+  3. **Making things**: the projects, each linked
+  4. **Photography**: flowers, rivers, mountains, the Milky Way, with the Unsplash link
+  5. **Say hello**: LinkedIn, GitHub, Unsplash
+
+  Plus a small **About this meadow** marker for the credits.
+- **In the world:** hand-built wooden signboards (posts, a weathered plank
+  face, a little moss, wildflowers at the foot). Each shows its title in large
+  hand-painted lettering, readable from a distance, with a simple icon
+  (a Slack-style hash, a hammer, a camera, a wave).
+- **Reading:** when you reach a board (glide close, click it, or press Enter)
+  the camera settles in front of it and a **reading card** opens beside it.
+  The card holds the full section text as real HTML (crisp, selectable,
+  with working links, AA contrast), styled like paper pinned to the wood.
+  Next and Previous buttons on the card glide you onward.
+- **Single source of truth:** the card content *is* the existing semantic
+  HTML in `index.html`, so it stays readable without JavaScript and to
+  screen readers in reading order.
+- A board remembers being visited (its flowers have bloomed, F6) and is
+  filled in on the compass.
+
+## Story F5 — The Petal Stream
+**As** a visitor, **I want** a ribbon of petals that flows with me and shows
+the way, **so that** I feel like the wind and never feel lost.
+
+Acceptance criteria
+- 150–400 petals (instanced, curved, two-sided, lit, slightly translucent)
+  flutter and tumble along a smooth flowing path around the camera.
+- When you're idle, the stream drifts ahead towards the **next unvisited
+  board**, then circles back, like a gentle "this way".
+- While you glide, it streams alongside you and curls around blooms. On
+  desktop it leans towards the cursor.
+- It starts with a handful of petals and grows with every bloom (F6).
+- Reduced motion: the stream rests near the next board as a soft marker.
+
+## Story F6 — Bring Back the Colour
+**As** a visitor, **I want** the meadow to come alive as I learn about
+Anirudh, **so that** reading his story literally makes the valley bloom.
+
+Acceptance criteria
+- Clusters of closed buds surround each board: violet at At Slack, scarlet
+  and gold at Making things, white at Photography, everything at Say hello.
+  Opening a board makes its buds bloom over about a second, with a small burst
+  of light, and their petals join the stream.
+- **Colour returns:** the valley starts softly desaturated and dusky. A
+  "life" field (painted into a small texture as blooms happen) saturates and
+  warms the grass and terrain around each visited board, spreading slowly.
+  When all five boards are read, the whole valley is in colour and the sun
+  settles into golden hour.
+- Blooms persist for the visit.
+
+## Story F7 — Sound (opt-in)
+**As** a visitor who wants the full feeling, **I want** soft ambient sound,
+**so that** the meadow feels alive. It's never on by default.
+
+Acceptance criteria
+- A small, quiet sound toggle, off by default, keyboard accessible, and
+  remembered for the visit.
+- Web Audio only, with no audio files:
+  - a filtered-noise wind bed that swells with gusts and with your glide speed
+  - a pentatonic chime for each bloom, pitched by colour and panned by position
+  - a low warm pad
+- The volume stays modest, and sound pauses when the tab is hidden.
+
+## Story F8 — Polish, Performance & Review
+**As** Anirudh, **I want** the explorable meadow to stay fast, readable and
+accessible, **so that** nothing from Part 1 regresses.
+
+Acceptance criteria
+- Adaptive quality scales the grass chunks, petals, bloom and far field on
+  phones and weaker machines, with the frame-rate watcher kept.
+- **Accessibility:**
+  - axe-core reports 0 violations
+  - the reading cards pass AA
+  - every board is reachable and readable by keyboard alone, with a visible focus
+  - screen readers get the five sections in order
+  - the no-WebGL fallback is today's readable page with a warm gradient
+- A first-visit hint (e.g. "click the grass to drift · Tab to visit boards")
+  fades after the first move.
+- A new OG image comes from the bloomed valley with the Hello board.
+- Review screenshots go in `docs/review/`:
+  - the start
+  - gliding between boards
+  - a board open
+  - a phone view
+  - the fully bloomed valley
+
+## Order of work
+F1 → F2 → F3 → F4 → F5 → F6 → F7 → F8, each merged to `main` when done.
+F3 and F4 together make the first explorable version; F5–F6 bring the Flower feeling.
