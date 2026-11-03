@@ -151,3 +151,176 @@ a:focus-visible, .skip:focus { outline: 3px solid var(--lupine); outline-offset:
   .projects li, .contact li { grid-template-columns: 1fr; }
   .lede { font-size: 17.5px; }
 }
+
+/* ======================================================================
+   Explore mode: the sections become reading cards beside the boards,
+   with a compass strip and a small toolbar over the meadow.
+   ====================================================================== */
+.footer-title { font-size: 22px; margin-bottom: 8px; }
+
+body.explore { overflow: hidden; }
+body.explore #meadow { touch-action: none; }
+body.explore main {
+  position: fixed;
+  right: clamp(16px, 3vw, 40px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(30rem, 100% - 32px);
+  margin: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+body.explore main > * { display: none; }
+body.explore main > .open {
+  display: block;
+  pointer-events: auto;
+  max-height: min(82vh, 760px);
+  overflow-y: auto;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  animation: card-in 0.45s ease both;
+}
+body.explore main > .panel.open { padding: clamp(22px, 3vw, 32px); }
+body.explore .hero.open .hero-panel { box-shadow: none; }
+body.explore .scroll-hint { display: none; }
+@keyframes card-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { body.explore main > .open { animation: none; } }
+
+/* paper pinned to the wood */
+.card-nav { display: none; }
+body.explore .card-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(40, 60, 30, 0.14);
+}
+
+.card-nav button, .hud button {
+  font: 600 14px/1 var(--sans);
+  color: var(--lupine);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(68, 54, 166, 0.25);
+  border-radius: 999px;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+.card-nav button:hover, .hud button:hover { color: var(--paintbrush); border-color: currentColor; }
+.card-nav button:focus-visible, .hud button:focus-visible { outline: 3px solid var(--lupine); outline-offset: 2px; }
+.card-nav .card-close { padding: 6px 12px; font-size: 18px; margin-left: auto; }
+body.explore .card :is(h1, h2):focus { outline: none; }
+
+/* ---------- HUD ---------- */
+.hud { display: none; }
+body.explore .hud { display: block; }
+.compass {
+  pointer-events: none;
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  height: 52px;
+  z-index: 4;
+  background: linear-gradient(90deg, transparent, rgba(250, 247, 239, 0.75) 12%, rgba(250, 247, 239, 0.75) 88%, transparent);
+  border-radius: 14px;
+}
+.compass::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: rgba(27, 39, 26, 0.25);
+}
+.hud .mark {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 600 11.5px/1.1 var(--sans);
+  white-space: nowrap;
+  transition: opacity 0.3s;
+}
+.hud .mark .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--lupine); background: transparent; }
+.hud .mark.visited .dot { background: var(--lupine); }
+.hud .mark.small .dot { width: 9px; height: 9px; border-color: var(--arnica); }
+.hud .mark.small.visited .dot { background: var(--arnica); }
+.hud .mark.behind { opacity: 0.45; }
+.hud .mark .mark-label { opacity: 0; transition: opacity 0.3s; }
+.hud .mark.ahead .mark-label { opacity: 1; }
+
+.trail {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(250, 247, 239, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.trail button { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; background: transparent; border-color: transparent; }
+.trail button .dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--lupine); }
+.trail button.visited .dot { background: var(--lupine); }
+.trail button[aria-current] { background: rgba(68, 54, 166, 0.1); }
+
+.tools { position: fixed; left: 16px; top: 16px; z-index: 4; display: flex; gap: 8px; }
+.tools button { background: rgba(250, 247, 239, 0.85); }
+
+.hint {
+  position: fixed;
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(250, 247, 239, 0.82);
+  color: var(--ink);
+  font: 500 14px/1.3 var(--sans);
+  text-align: center;
+  transition: opacity 1.2s ease 1s;
+  pointer-events: none;
+}
+.hud.moved .hint { opacity: 0; }
+
+/* the skip link becomes the page/explore switch; keep it out of the way until focused */
+body.explore .skip:focus { top: 76px; }
+
+@media (max-width: 640px) {
+  body.explore main {
+    top: auto;
+    bottom: 12px;
+    transform: none;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+  body.explore main { bottom: 74px; }
+  body.explore main > .open { max-height: 50vh; }
+  .compass { top: 64px; height: 44px; }
+  .hud .mark .mark-label { display: none; }
+  .trail { bottom: 12px; left: 12px; right: 12px; transform: none; justify-content: flex-start; }
+  .tools { left: 12px; top: 12px; }
+  .hint { bottom: auto; top: 118px; width: max-content; max-width: calc(100vw - 32px); }
+}

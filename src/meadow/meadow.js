@@ -5,6 +5,8 @@ import { createGrass, sharedUniforms } from './grass.js';
 import { createFlowers } from './flowers.js';
 import { createButterflies, createPollen } from './life.js';
 import { createPost } from './post.js';
+import { createBoards } from './boards.js';
+import { BOARDS, PATH } from './places.js';
 
 // The whole scene: an open valley of rolling hills under a warm, painted sky.
 export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}) {
@@ -34,8 +36,11 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
   uniforms.uSunColor.value.set('#ffe6c0');
   uniforms.uHeightMap.value = createHeightTexture();
   uniforms.uHeightExtent.value = HEIGHTMAP.extent;
+  uniforms.uPath = { value: PATH.map(([x, z]) => new THREE.Vector2(x, z)) };
 
-  scene.add(createTerrain(uniforms), createTrees());
+  const terrain = createTerrain(uniforms);
+  const boards = createBoards(BOARDS);
+  scene.add(terrain, createTrees(), boards.group);
   // the field around you: fewer blades and a smaller tile on lighter devices
   scene.add(createGrass(uniforms, Math.round(130000 * quality), Math.round(40 + 26 * quality)));
   scene.add(createFlowers(uniforms, Math.round(9000 * quality)));
@@ -83,5 +88,5 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
     post.composer.render();
   }
 
-  return { renderer, scene, camera, uniforms, butterflies, resize, setView, setSunElevation, render, heightAt };
+  return { renderer, scene, camera, uniforms, butterflies, boards, resize, setView, setSunElevation, render, heightAt };
 }
