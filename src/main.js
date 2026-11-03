@@ -1,7 +1,8 @@
 import './style.css';
 
-// The page's words are plain HTML and are readable immediately. The meadow is built after
-// the first paint, scaled to the device, and is purely decoration (aria-hidden).
+// The page's words are plain HTML and are readable immediately. With WebGL, the meadow grows
+// after the first paint and the page becomes a place to explore: the sections turn into boards
+// standing in the grass. "Read as a page" (the first Tab stop) switches back to plain reading.
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -24,7 +25,7 @@ function startingQuality() {
 }
 
 async function grow() {
-  const [{ createMeadow }, { createWalk }] = await Promise.all([import('./meadow/meadow.js'), import('./walk.js')]);
+  const [{ createMeadow }, { createExplore }] = await Promise.all([import('./meadow/meadow.js'), import('./explore.js')]);
   const canvas = document.createElement('canvas');
   canvas.id = 'meadow';
   canvas.setAttribute('aria-hidden', 'true');
@@ -37,7 +38,10 @@ async function grow() {
   const resize = () => meadow.resize(innerWidth, innerHeight, pixelRatios[prStep]);
   addEventListener('resize', resize);
   resize();
-  const walk = createWalk(meadow, { reducedMotion });
+  const touch = window.matchMedia('(pointer: coarse)').matches;
+  document.body.classList.add('explore');
+  const explore = createExplore(meadow, { reducedMotion, touch });
+  setUpPageToggle();
 
   // Lower the resolution if frames are slow (measured over 2 s windows, after a warm-up).
   let frames = 0, windowStart = 0, slowWindows = 0;
@@ -62,12 +66,28 @@ async function grow() {
   let last = start;
   meadow.renderer.setAnimationLoop((now) => {
     if (document.hidden) return (last = now);
-    walk.update(Math.min((now - last) / 1000, 0.1));
+    const t = (now - start) / 1000;
+    explore.update(Math.min((now - last) / 1000, 0.1), t);
     last = now;
-    meadow.render((now - start) / 1000);
+    meadow.render(t);
     frames++;
     if (frames === 2) canvas.classList.add('ready'); // fade in once there's a real frame
     watchFrameRate(now);
+  });
+}
+
+// The skip link becomes a switch between exploring the meadow and reading everything as a page.
+function setUpPageToggle() {
+  const skip = document.querySelector('.skip');
+  const label = () => (document.body.classList.contains('explore') ? 'Read everything as a page' : 'Explore the meadow');
+  skip.textContent = label();
+  skip.setAttribute('href', '#top');
+  skip.addEventListener('click', (e) => {
+    e.preventDefault();
+    const exploring = document.body.classList.toggle('explore');
+    skip.textContent = label();
+    if (!exploring) document.getElementById('top').scrollIntoView();
+    skip.focus();
   });
 }
 

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { seeded } from './noise.js';
 import { WIND_GLSL, LIGHT_GLSL } from './shading.js';
 import { HEIGHT_GLSL } from './terrain.js';
+import { PATH_GLSL } from './places.js';
 
 export { sharedUniforms } from './shading.js';
 
@@ -42,6 +43,7 @@ export function createGrass(uniforms, count, tile = 64) {
       varying float vK; varying float vDry; varying vec3 vWorld; varying float vGust;
       ${WIND_GLSL}
       ${HEIGHT_GLSL}
+      ${PATH_GLSL}
       float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float vnoise(vec2 p){
         vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -57,7 +59,8 @@ export function createGrass(uniforms, count, tile = 64) {
         float edge = 1.0 - smoothstep(0.62, 0.98, length(xz - cam) / (uTile * 0.5));
         float tussock = smoothstep(0.18, 0.55, vnoise(xz * 0.12) * 0.7 + vnoise(xz * 0.5) * 0.3);
         float lush = 0.75 + 0.5 * vnoise(xz * 0.04 + 3.0);
-        float h = aParams.y * edge * mix(0.35, 1.0, tussock) * lush;
+        float worn = smoothstep(0.7, 1.7, pathDistance(xz)); // short grass along the path
+        float h = aParams.y * edge * mix(0.35, 1.0, tussock) * lush * mix(0.08, 1.0, worn);
 
         float k = position.y;
         vec3 p = vec3(position.x * aParams.z, k * h, 0.0);

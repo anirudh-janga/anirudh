@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { fbm2, smoothstep } from './noise.js';
 import { LIGHT_GLSL, WIND_GLSL } from './shading.js';
+import { PATH_GLSL } from './places.js';
 
 // The explorable valley: broad, soft swells, a low rise where you arrive,
 // and hills climbing gently all around into warm haze.
@@ -68,6 +69,7 @@ export function createTerrain(uniforms) {
       varying vec3 vWorld; varying vec3 vNormal;
       ${WIND_GLSL}
       ${LIGHT_GLSL}
+      ${PATH_GLSL}
       float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float vnoise(vec2 p){
         vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -83,6 +85,9 @@ export function createTerrain(uniforms) {
         albedo *= 0.9 + 0.2 * vnoise(vec2(xz.x * 1.7, xz.y * 0.6));
         // the gust sheen travelling over the hills
         albedo += vec3(0.11, 0.1, 0.03) * gustAt(xz);
+        // the trodden path: worn, sun-dried earth with soft grassy edges
+        float path = 1.0 - smoothstep(0.55, 1.35, pathDistance(xz) + (vnoise(xz * 1.3) - 0.5) * 0.5);
+        albedo = mix(albedo, vec3(0.5, 0.4, 0.24) * (0.85 + 0.3 * vnoise(xz * 3.0)), path * 0.85);
         gl_FragColor = vec4(shade(albedo, normalize(vNormal), vWorld, 0.4), 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
