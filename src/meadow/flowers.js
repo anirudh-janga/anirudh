@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { heightAt } from './terrain.js';
 import { fbm2, seeded } from './noise.js';
-import { WIND_GLSL, LIGHT_GLSL, MEADOW } from './grass.js';
+import { MEADOW } from './grass.js';
+import { WIND_GLSL, LIGHT_GLSL } from './shading.js';
 import { distanceToPath } from './path.js';
 
 // The wildflowers of Rainier's subalpine meadows, each built from a few primitives (metres).

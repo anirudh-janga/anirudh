@@ -1,20 +1,20 @@
 import * as THREE from 'three';
 import { createTerrain, heightAt } from './terrain.js';
-import { createSky, createWoods, createRainier, sunDirection, SUN, HAZE } from './landscape.js';
+import { createSky, createTrees, sunDirection, SUN, HAZE } from './landscape.js';
 import { createGrass, sharedUniforms } from './grass.js';
 import { createFlowers } from './flowers.js';
 import { createButterflies, createPollen } from './life.js';
 import { createPost } from './post.js';
 
-// The whole scene: a sunlit clearing at the edge of the woods, Rainier beyond.
+// The whole scene: an open valley of rolling hills under a warm, painted sky.
 export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.52;
+  renderer.toneMappingExposure = 0.95;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(HAZE, 0.0024);
+  scene.fog = new THREE.FogExp2(HAZE, 0.0018);
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 12000);
 
   const sunDir = sunDirection();
@@ -22,22 +22,25 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
   sky.setSun(sunDir);
   scene.add(sky.mesh);
 
-  const sun = new THREE.DirectionalLight('#ffd9a8', 2.6);
+  const sun = new THREE.DirectionalLight('#ffe2b8', 2.4);
   sun.position.copy(sunDir).multiplyScalar(200);
-  scene.add(sun, new THREE.HemisphereLight('#a8c4e6', '#4d5e2b', 0.9));
+  scene.add(sun, new THREE.HemisphereLight('#ffdcc8', '#5d6e32', 1.1));
 
   const uniforms = sharedUniforms();
   uniforms.uSunDir.value.copy(sunDir);
   uniforms.uFogColor.value.copy(HAZE);
+  uniforms.uFogDensity.value = 0.0018;
+  uniforms.uSkyColor.value.set('#ffd2bc');
+  uniforms.uSunColor.value.set('#ffe6c0');
 
-  scene.add(createTerrain(), createWoods(quality), createRainier());
+  scene.add(createTerrain(uniforms), createTrees());
   scene.add(createGrass(uniforms, Math.round(110000 * quality)));
   scene.add(createFlowers(uniforms, Math.round(9000 * quality)));
   const butterflies = createButterflies(quality < 0.6 ? 4 : 7);
   const pollen = createPollen(Math.round(700 * quality));
   scene.add(butterflies.group, pollen.points);
 
-  const post = createPost(renderer, scene, camera, { samples: quality < 0.6 ? 28 : 48 });
+  const post = createPost(renderer, scene, camera, { bloom: quality >= 0.3 });
 
   let pixelRatio = 1;
   function resize(w, h, maxPr = 2) {
@@ -63,8 +66,9 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
     sun.position.copy(sunDir).multiplyScalar(200);
     uniforms.uSunDir.value.copy(sunDir);
     // lower sun → warmer light
-    const warm = THREE.MathUtils.clamp((14 - deg) / 8, 0, 1);
-    uniforms.uSunColor.value.set('#ffd7a0').lerp(new THREE.Color('#ffb070'), warm);
+    const warm = THREE.MathUtils.clamp((12 - deg) / 8, 0, 1);
+    uniforms.uSunColor.value.set('#ffe6c0').lerp(new THREE.Color('#ffb478'), warm);
+    sky.uniforms.uGold.value = warm;
     sun.color.copy(uniforms.uSunColor.value);
   }
 
@@ -72,7 +76,7 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
     uniforms.uTime.value = reducedMotion ? 0 : t;
     butterflies.update(t, reducedMotion);
     pollen.update(reducedMotion ? 0 : t, sunDir, pixelRatio);
-    post.update(sunDir);
+    sky.uniforms.uTime.value = t;
     post.composer.render();
   }
 

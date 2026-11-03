@@ -1,38 +1,96 @@
 import * as THREE from 'three';
 import { fbm2, smoothstep } from './noise.js';
+import { LIGHT_GLSL } from './shading.js';
 
-// A gently rolling meadow: flat-ish clearing in the middle, a small rise in the
-// foreground where we stand, hills climbing into the woods all around.
+// The explorable valley: broad, soft swells, a low rise where you arrive,
+// and hills climbing gently all around into warm haze.
+export const START = { x: 0, z: 72 };
+export const VALLEY_RADIUS = 115;
+
 export function heightAt(x, z) {
   const r = Math.hypot(x, z);
-  let h = fbm2(x * 0.012, z * 0.012) * 3.2 + fbm2(x * 0.05 + 7, z * 0.05 - 3, 3) * 0.5;
-  h += smoothstep(55, 240, r) * 18 * (0.65 + 0.35 * fbm2(x * 0.005, z * 0.005, 2));
-  h += Math.exp(-(x * x) / 500 - ((z - 26) * (z - 26)) / 260) * 1.4;
+  let h = fbm2(x * 0.007, z * 0.007, 4) * 7;
+  h += fbm2(x * 0.02 + 5, z * 0.02 - 9, 3) * 1.1;
+  h += smoothstep(95, 650, r) * 42 * (0.55 + 0.45 * fbm2(x * 0.003 + 2, z * 0.003, 2));
+  h += 3.5 * Math.exp(-((x - START.x) ** 2 + (z - START.z) ** 2) / 900);
   return h;
 }
 
-export function createTerrain() {
-  const size = 900;
-  const seg = 260;
+// The same heights baked into a texture, so shaders (grass that follows you) can find the ground.
+export const HEIGHTMAP = { size: 512, extent: 360 };
+export function createHeightTexture() {
+  const { size, extent } = HEIGHTMAP;
+  const data = new Float32Array(size * size);
+  for (let j = 0; j < size; j++) {
+    for (let i = 0; i < size; i++) {
+      const x = (i / (size - 1) - 0.5) * extent;
+      const z = (j / (size - 1) - 0.5) * extent;
+      data[j * size + i] = heightAt(x, z);
+    }
+  }
+  const tex = new THREE.DataTexture(data, size, size, THREE.RedFormat, THREE.FloatType);
+  tex.minFilter = tex.magFilter = THREE.LinearFilter;
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// GLSL twin of heightAt, via the baked texture.
+export const HEIGHT_GLSL = /* glsl */ `
+  uniform sampler2D uHeightMap;
+  uniform float uHeightExtent;
+  float groundAt(vec2 xz){
+    vec2 uv = xz / uHeightExtent + 0.5;
+    return texture(uHeightMap, uv).r;
+  }
+`;
+
+export function createTerrain(uniforms) {
+  const size = 1600;
+  const seg = 400;
   const geo = new THREE.PlaneGeometry(size, size, seg, seg);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
-  const colors = new Float32Array(pos.count * 3);
-  const meadow = new THREE.Color('#5d7f2e');
-  const dry = new THREE.Color('#9a8f45');
-  const forest = new THREE.Color('#263a1c');
-  const c = new THREE.Color();
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), z = pos.getZ(i);
-    pos.setY(i, heightAt(x, z));
-    const r = Math.hypot(x, z);
-    c.copy(meadow).lerp(dry, smoothstep(-0.1, 0.5, fbm2(x * 0.03 + 11, z * 0.03, 3)) * 0.55);
-    c.lerp(forest, smoothstep(40, 110, r));
-    colors.set([c.r, c.g, c.b], i * 3);
-  }
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(pos.getX(i), pos.getZ(i)));
   geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+
+  // Painted grassland: deep green hollows, sunlit yellow-green crests, a sheen where the gusts pass.
+  const material = new THREE.ShaderMaterial({
+    uniforms,
+    vertexShader: /* glsl */ `
+      varying vec3 vWorld; varying vec3 vNormal;
+      void main(){
+        vec4 w = modelMatrix * vec4(position, 1.0);
+        vWorld = w.xyz; vNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * w;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform float uTime, uBreeze;
+      varying vec3 vWorld; varying vec3 vNormal;
+      ${LIGHT_GLSL}
+      float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float vnoise(vec2 p){
+        vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + 1.0), f.x), f.y);
+      }
+      void main(){
+        vec2 xz = vWorld.xz;
+        float patches = vnoise(xz * 0.035) * 0.6 + vnoise(xz * 0.11) * 0.4;
+        vec3 hollow = vec3(0.13, 0.27, 0.07);
+        vec3 crest = vec3(0.42, 0.55, 0.15);
+        vec3 albedo = mix(hollow, crest, smoothstep(0.25, 0.85, patches));
+        // fine streaks so distant slopes still read as grass
+        albedo *= 0.9 + 0.2 * vnoise(vec2(xz.x * 1.7, xz.y * 0.6));
+        // the gust sheen travelling over the hills
+        vec2 wd = normalize(vec2(1.0, -0.35));
+        float gust = pow(0.5 + 0.5 * sin(dot(xz, wd) * 0.16 - uTime * 1.3), 3.0) * uBreeze;
+        albedo += vec3(0.1, 0.1, 0.03) * gust;
+        gl_FragColor = vec4(shade(albedo, normalize(vNormal), vWorld, 0.4), 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+  });
+  const mesh = new THREE.Mesh(geo, material);
   mesh.name = 'terrain';
   return mesh;
 }
