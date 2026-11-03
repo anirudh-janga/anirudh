@@ -64,10 +64,13 @@ export function createExplore(meadow, { reducedMotion, touch, onVisit = () => {}
     const m = e.target.closest('button');
     if (m) goTo(m.dataset.board, { open: true, focus: e.detail === 0 });
   });
-  // keyboard: tabbing onto a board drifts towards it; Enter opens it
+  // keyboard: tabbing onto a board drifts towards it; Enter opens it.
+  // (Focus we move ourselves, e.g. back from a closed card, doesn't start a journey.)
+  let quietFocus = false;
   hud.querySelector('.trail').addEventListener('focusin', (e) => {
     const m = e.target.closest('button');
-    if (m && m.matches(':focus-visible') && openId !== m.dataset.board) goTo(m.dataset.board, { open: false });
+    if (quietFocus || !m || !m.matches(':focus-visible') || openId === m.dataset.board) return;
+    goTo(m.dataset.board, { open: false });
   });
   hud.querySelector('[data-tool="start"]').addEventListener('click', () => {
     close();
@@ -144,7 +147,11 @@ export function createExplore(meadow, { reducedMotion, touch, onVisit = () => {}
     cards[id].classList.remove('open');
     trail[id].removeAttribute('aria-current');
     openId = null;
-    if (returnFocus) trail[id].focus();
+    if (returnFocus) {
+      quietFocus = true;
+      trail[id].focus();
+      quietFocus = false;
+    }
   }
 
   // ---------- input ----------
@@ -296,7 +303,10 @@ export function createExplore(meadow, { reducedMotion, touch, onVisit = () => {}
       m.classList.toggle('ahead', b.id === nearest);
     }
     fwd.set(-Math.sin(s.yaw), 0, -Math.cos(s.yaw));
-    return { x: s.x, z: s.z, speed, forward: fwd, openId, visited };
+    // for the petal stream: the next board you haven't read, and the one you're reading
+    const nextBoard = BOARDS.find((b) => !visited.has(b.id));
+    const at = (b) => b && { x: b.x, y: meadow.heightAt(b.x, b.z), z: b.z };
+    return { x: s.x, z: s.z, speed, forward: fwd, openId, visited, next: at(nextBoard), reading: at(byId[openId]) };
   }
 
   // arrive at the start, the Hello board just ahead, with its card open

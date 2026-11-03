@@ -3,7 +3,8 @@ import { createTerrain, createHeightTexture, heightAt, HEIGHTMAP } from './terra
 import { createSky, createTrees, sunDirection, SUN, HAZE } from './landscape.js';
 import { createGrass, sharedUniforms } from './grass.js';
 import { createFlowers } from './flowers.js';
-import { createButterflies, createPollen } from './life.js';
+import { createPollen } from './life.js';
+import { createPetals } from './petals.js';
 import { createPost } from './post.js';
 import { createBoards } from './boards.js';
 import { BOARDS, PATH } from './places.js';
@@ -44,9 +45,11 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
   // the field around you: fewer blades and a smaller tile on lighter devices
   scene.add(createGrass(uniforms, Math.round(130000 * quality), Math.round(40 + 26 * quality)));
   scene.add(createFlowers(uniforms, Math.round(9000 * quality)));
-  const butterflies = createButterflies(quality < 0.6 ? 4 : 7);
   const pollen = createPollen(Math.round(700 * quality));
-  scene.add(butterflies.group, pollen.points);
+  // the petal stream starts small; blooms add to it (F6)
+  const petals = createPetals(quality < 0.6 ? 220 : 400, { reducedMotion });
+  petals.add('#ffb3cc', 40);
+  scene.add(pollen.points, petals.mesh);
 
   const post = createPost(renderer, scene, camera, { bloom: quality >= 0.3 });
 
@@ -82,11 +85,10 @@ export function createMeadow(canvas, { quality = 1, reducedMotion = false } = {}
 
   function render(t) {
     uniforms.uTime.value = reducedMotion ? 0 : t;
-    butterflies.update(t, reducedMotion);
     pollen.update(reducedMotion ? 0 : t, sunDir, pixelRatio);
     sky.uniforms.uTime.value = t;
     post.composer.render();
   }
 
-  return { renderer, scene, camera, uniforms, butterflies, boards, resize, setView, setSunElevation, render, heightAt };
+  return { renderer, scene, camera, uniforms, petals, boards, resize, setView, setSunElevation, render, heightAt };
 }
